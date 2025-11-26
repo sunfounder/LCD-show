@@ -20,7 +20,12 @@ sudo sed -i -e 's/#max_framebuffers=2/max_framebuffers=2/' ./boot/config.txt.bak
 fi
 if [ $hardware_model -eq 5 ]; then
 sudo sed -i -e 's/#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/' ./boot/config.txt.bak
+else
+if [[ "$deb_version" = "13.1" ]] || [[ "$deb_version" > "13.1" ]]; then
+sudo sed -i -e 's/#dtoverlay=vc4-kms-v3d/dtoverlay=vc4-kms-v3d/' ./boot/config.txt.bak
 fi
+fi
+
 sudo echo "hdmi_force_hotplug=1" >> ./boot/config.txt.bak
 sudo echo "dtparam=i2c_arm=on" >> ./boot/config.txt.bak
 sudo echo "dtparam=spi=on" >> ./boot/config.txt.bak
@@ -43,13 +48,21 @@ sudo cp -rf ./boot/config.txt.bak /boot/config.txt
 #else
 #sudo cp ./usr/cmdline.txt /boot/
 #fi
+if [[ "$deb_version" < "13.1" ]]; then
 sudo cp ./usr/inittab /etc/
+fi
 if [[ "$deb_version" < "12.1" ]]; then
 sudo cp -rf ./usr/99-fbturbo.conf-HDMI /usr/share/X11/xorg.conf.d/99-fbturbo.conf 
 fi
 if [ ! -d /etc/X11/xorg.conf.d ]; then
 sudo mkdir /etc/X11/xorg.conf.d 
 fi
+
+if [[ "$deb_version" = "13.1" ]] || [[ "$deb_version" > "13.1" ]]; then
+sudo cp -rf ./usr/99-fbturbo.conf-HDMI  /usr/share/X11/xorg.conf.d/99-fbturbo.~
+sudo cp -rf ./etc/.bash_profile /home/$username/
+fi
+
 sudo cp -rf ./usr/99-calibration.conf-5-0 /etc/X11/xorg.conf.d/99-calibration.conf 
 sudo touch ./.have_installed
 echo "hdmi:resistance:5:0:800:480" > ./.have_installed
@@ -59,8 +72,8 @@ version=`uname -v`
 #if test "$nodeplatform" = "raspberrypi";then
 #echo "this is raspberrypi kernel"
 input_result=0
-version=${version##* }
-#version=${version#*#}
+version=${version##*(}
+version=${version%%-*}
 echo $version
 if test $version -lt 2017; then
 echo "reboot"
@@ -70,7 +83,7 @@ wget --spider -q -o /dev/null --tries=1 -T 10 http://mirrors.zju.edu.cn/raspbian
 if [ $? -ne 0 ]; then
 input_result=1
 else
-sudo apt-get update
+#sudo apt-get update
 sudo apt-get install xserver-xorg-input-evdev  2> error_output.txt
 dpkg -l | grep xserver-xorg-input-evdev > /dev/null 2>&1
 if [ $? -ne 0 ]; then

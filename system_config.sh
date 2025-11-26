@@ -3,6 +3,7 @@
 big_version=`lsb_release -r | awk -F ' '  '{printf $NF}'`
 deb_version=`cat /etc/debian_version | tr -d '\n'`
 hw_result=`tr -d '\0' < /proc/device-tree/model`
+username=`logname | tr -d '\n'`
 
 if [ $(getconf WORD_BIT) = '32' ] && [ $(getconf LONG_BIT) = '64' ] ; then
 hardware_arch=64
@@ -16,6 +17,7 @@ else
 hardware_model=255
 fi
 
+sudo raspi-config nonint do_boot_behaviour B2
 sudo raspi-config nonint do_wayland W1
 if [ -f /boot/firmware/config.txt ]; then
 sudo ln -sf /boot/firmware/config.txt /boot/config.txt
